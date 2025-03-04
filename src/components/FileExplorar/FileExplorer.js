@@ -9,10 +9,9 @@ import {
 } from "react-icons/md";
 import SearchBox from "../SearchBox/SearchBox";
 
-export default function FileExplorer() {
+export default function FileExplorer({setFileContent}) {
   const [entries, setEntries] = useState([]);
   const [currentHandle, setCurrentHandle] = useState(null);
-  const [fileContent, setFileContent] = useState("");
   const [handleStack, setHandleStack] = useState([]);
   const [expandedSections, setExpandedSections] = useState({
     explorer: true,
@@ -146,14 +145,6 @@ export default function FileExplorer() {
           </div>
         )}
       </div>
-
-      {/* File Content Preview */}
-      {fileContent && (
-        <div className="mt-4 p-2 bg-[#1E1E1E] rounded">
-          <h3 className="text-sm font-bold mb-2">File Content:</h3>
-          <pre className="text-sm">{fileContent}</pre>
-        </div>
-      )}
     </div>
   );
 }

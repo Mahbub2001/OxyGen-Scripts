@@ -11,6 +11,7 @@ export default function Home() {
   const [isRightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [expanded, setExpanded] = useState(true);
+  const [fileContent, setFileContent] = useState("");
 
   const toggleExpand = () => {
     setExpanded((prev) => !prev);
@@ -53,7 +54,7 @@ export default function Home() {
           className={`${isLeftSidebarOpen ? "block" : "hidden"} md:block`}
         >
           <div className="bg-[#202020] h-full p-2 shadow-2xl rounded-md">
-            <FileExplorer />
+            <FileExplorer setFileContent={setFileContent} />
           </div>
         </Panel>
 
@@ -64,7 +65,7 @@ export default function Home() {
             <PanelGroup direction="vertical">
               <Panel defaultSize={70} minSize={30} className="">
                 <div className="h-full bg-[#202020] rounded-lg shadow-lg p-4">
-                  <Editor />
+                  <Editor fileContent={fileContent} />
                 </div>
               </Panel>
 
