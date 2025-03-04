@@ -1,5 +1,12 @@
 "use client";
 import { useState } from "react";
+import {
+  MdKeyboardArrowDown,
+  MdFolder,
+  MdInsertDriveFile,
+  MdChevronRight,
+  MdChevronLeft,
+} from "react-icons/md";
 import SearchBox from "../SearchBox/SearchBox";
 
 export default function FileExplorer() {
@@ -7,6 +14,11 @@ export default function FileExplorer() {
   const [currentHandle, setCurrentHandle] = useState(null);
   const [fileContent, setFileContent] = useState("");
   const [handleStack, setHandleStack] = useState([]);
+  const [expandedSections, setExpandedSections] = useState({
+    explorer: true,
+    search: false,
+    sourceControl: false,
+  });
 
   async function handleFolderSelect() {
     try {
@@ -50,32 +62,96 @@ export default function FileExplorer() {
     }
   }
 
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
   return (
-    <div>
+    <div className="h-full bg-[#252526] text-[#CCCCCC] p-2 text-sm">
       <div className="max-w-sm mx-auto border border-gray-600 rounded-sm shadow-lg">
         <SearchBox />
       </div>
-
-      <button onClick={handleFolderSelect}>Select Folder</button>
-      {handleStack.length > 1 && <button onClick={goBack}>Go Back</button>}
-      <ul>
-        {entries.map((entry, index) => (
-          <li
-            key={index}
-            onClick={() => handleEntryClick(entry)}
-            style={{
-              cursor: "pointer",
-              fontWeight: entry.kind === "directory" ? "bold" : "normal",
-            }}
+      <hr className="my-1 text-gray-600" />
+      <div className="">
+        <div
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("explorer")}
+        >
+          <div className="flex items-center space-x-2">
+            <MdKeyboardArrowDown
+              className={`transition-transform ${
+                expandedSections.explorer ? "rotate-0" : "-rotate-90"
+              }`}
+            />
+            <span>Files</span>
+          </div>
+          <button
+            onClick={handleFolderSelect}
+            className="p-1 hover:bg-[#3E3E42] rounded"
           >
-            {entry.name}
-          </li>
-        ))}
-      </ul>
+            Open Folder
+          </button>
+        </div>
+        {expandedSections.explorer && (
+          <div className="mt-2">
+            {handleStack.length > 1 && (
+              <button
+                onClick={goBack}
+                className="flex items-center space-x-2 p-1 hover:bg-[#3E3E42] rounded w-full text-left"
+              >
+                <MdChevronLeft />
+                <span>Back</span>
+              </button>
+            )}
+            <ul className="mt-2">
+              {entries.map((entry, index) => (
+                <li
+                  key={index}
+                  onClick={() => handleEntryClick(entry)}
+                  className="flex items-center space-x-2 p-1 hover:bg-[#3E3E42] rounded cursor-pointer"
+                >
+                  {entry.kind === "directory" ? (
+                    <MdFolder />
+                  ) : (
+                    <MdInsertDriveFile />
+                  )}
+                  <span>{entry.name}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+      <hr className="my-1 text-gray-600" />
+      <div className="mb-4">
+        <div
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => toggleSection("sourceControl")}
+        >
+          <div className="flex items-center space-x-2">
+            <MdKeyboardArrowDown
+              className={`transition-transform ${
+                expandedSections.sourceControl ? "rotate-0" : "-rotate-90"
+              }`}
+            />
+            <span>Widgets</span>
+          </div>
+        </div>
+        {expandedSections.sourceControl && (
+          <div className="mt-2">
+            <p className="text-sm text-gray-400">No changes</p>
+          </div>
+        )}
+      </div>
+
+      {/* File Content Preview */}
       {fileContent && (
-        <div>
-          <h3>File Content:</h3>
-          <pre>{fileContent}</pre>
+        <div className="mt-4 p-2 bg-[#1E1E1E] rounded">
+          <h3 className="text-sm font-bold mb-2">File Content:</h3>
+          <pre className="text-sm">{fileContent}</pre>
         </div>
       )}
     </div>
