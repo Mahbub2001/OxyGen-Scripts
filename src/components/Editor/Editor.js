@@ -20,9 +20,7 @@ function Editor({ fileContent, onContentChange }) {
 
   const handleScroll = () => {
     if (textareaRef.current && lineNumbersRef.current) {
-      requestAnimationFrame(() => {
-        lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
-      });
+      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
     }
   };
 
@@ -34,12 +32,17 @@ function Editor({ fileContent, onContentChange }) {
         <div
           ref={lineNumbersRef}
           className="w-10 pr-2 text-right text-[#858585] select-none overflow-hidden"
+          style={{
+            lineHeight: "1.5",
+            fontSize: "14px",
+            paddingBottom: "10px", 
+          }}
         >
-          {lines.map((_, index) => (
-            <div key={index + 1} className="leading-6">
-              {index + 1}
-            </div>
-          ))}
+          <pre className="whitespace-pre-wrap">
+            {lines.map((_, index) => (
+              <div key={index + 1}>{index + 1}</div>
+            ))}
+          </pre>
         </div>
         <textarea
           ref={textareaRef}
@@ -50,9 +53,9 @@ function Editor({ fileContent, onContentChange }) {
           style={{
             lineHeight: "1.5",
             fontSize: "14px",
-            minHeight: "calc(100% - 10px)",
+            minHeight: "100%",
             paddingBottom: "10px",
-            scrollBehavior: "smooth",
+            whiteSpace: "pre-wrap",
             scrollbarWidth: "thin",
             scrollbarColor: "#858585 transparent",
           }}
