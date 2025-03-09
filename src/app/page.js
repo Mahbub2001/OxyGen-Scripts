@@ -4,10 +4,8 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { Menu } from "lucide-react";
 import FileExplorer from "@/components/FileExplorar/FileExplorer";
 import AiAssistant from "@/components/AiAssistant/AiAssistant";
-import Editor from "@/components/Editor/Editor";
-import Terminal from "@/components/Terminal/Terminal";
 import React from "react";
-import Tabs from "@/components/Tabs/Tabs";
+import EditorPanel from "@/components/EditorPanel/EditorPanel";
 export default function Home() {
   const [isLeftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [isRightSidebarOpen, setRightSidebarOpen] = useState(false);
@@ -36,13 +34,6 @@ export default function Home() {
       setTabs((prevTabs) => [...prevTabs, file]);
     }
     setCurrentTab(file.name);
-  };
-
-  const closeTab = (tabName) => {
-    setTabs((prevTabs) => prevTabs.filter((tab) => tab.name !== tabName));
-    if (currentTab === tabName) {
-      setCurrentTab(tabs.length > 1 ? tabs[0].name : null);
-    }
   };
 
   if (!isClient) {
@@ -75,33 +66,12 @@ export default function Home() {
         <PanelResizeHandle className="border-3 border-transparent cursor-col-resize hidden md:block" />
 
         <Panel defaultSize={70} minSize={40}>
-          <div className="h-full rounded-md">
-            <PanelGroup direction="vertical">
-              <Panel defaultSize={70} minSize={30} className="">
-                <div className="h-full bg-[#202020] rounded-lg shadow-lg p-4">
-                  <Tabs
-                    tabs={tabs}
-                    currentTab={currentTab}
-                    setCurrentTab={setCurrentTab}
-                    closeTab={closeTab}
-                  />
-                  <Editor
-                    fileContent={
-                      tabs.find((tab) => tab.name === currentTab)?.content || ""
-                    }
-                  />
-                </div>
-              </Panel>
-
-              <PanelResizeHandle className="border-3 border-transparent cursor-col-resize block" />
-
-              <Panel defaultSize={30} minSize={30} className="">
-                <div className="bg-[#202020] h-full rounded-lg shadow-lg p-4">
-                  <Terminal />
-                </div>
-              </Panel>
-            </PanelGroup>
-          </div>
+          <EditorPanel
+            tabs={tabs}
+            setTabs={setTabs}
+            currentTab={currentTab}
+            setCurrentTab={setCurrentTab}
+          />
         </Panel>
 
         <PanelResizeHandle className="border-3 border-transparent cursor-col-resize hidden md:block" />
