@@ -9,7 +9,7 @@ import {
 } from "react-icons/md";
 import SearchBox from "../SearchBox/SearchBox";
 
-export default function FileExplorer({setFileContent}) {
+export default function FileExplorer({ openTab }) {
   const [entries, setEntries] = useState([]);
   const [currentHandle, setCurrentHandle] = useState(null);
   const [handleStack, setHandleStack] = useState([]);
@@ -36,7 +36,6 @@ export default function FileExplorer({setFileContent}) {
       entryList.push(entry);
     }
     setEntries(entryList);
-    setFileContent("");
   }
 
   async function handleEntryClick(entry) {
@@ -47,7 +46,7 @@ export default function FileExplorer({setFileContent}) {
     } else if (entry.kind === "file") {
       const file = await entry.getFile();
       const content = await file.text();
-      setFileContent(content);
+      openTab({ name: entry.name, content });
     }
   }
 

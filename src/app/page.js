@@ -6,17 +6,15 @@ import FileExplorer from "@/components/FileExplorar/FileExplorer";
 import AiAssistant from "@/components/AiAssistant/AiAssistant";
 import Editor from "@/components/Editor/Editor";
 import Terminal from "@/components/Terminal/Terminal";
-
+import React from "react";
+import Tabs from "@/components/Tabs/Tabs";
 export default function Home() {
   const [isLeftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [isRightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [expanded, setExpanded] = useState(true);
-  const [fileContent, setFileContent] = useState("");
-
-  const toggleExpand = () => {
-    setExpanded((prev) => !prev);
-  };
+  const [tabs, setTabs] = useState([]);
+  const [currentTab, setCurrentTab] = useState(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -32,8 +30,19 @@ export default function Home() {
     setLeftSidebarOpen(false);
   };
 
-  const handleEditorChange = (newContent) => {
-    setFileContent(newContent);
+  const openTab = (file) => {
+    const existingTab = tabs.find((tab) => tab.name === file.name);
+    if (!existingTab) {
+      setTabs((prevTabs) => [...prevTabs, file]);
+    }
+    setCurrentTab(file.name);
+  };
+
+  const closeTab = (tabName) => {
+    setTabs((prevTabs) => prevTabs.filter((tab) => tab.name !== tabName));
+    if (currentTab === tabName) {
+      setCurrentTab(tabs.length > 1 ? tabs[0].name : null);
+    }
   };
 
   if (!isClient) {
@@ -59,7 +68,7 @@ export default function Home() {
           className={`${isLeftSidebarOpen ? "block" : "hidden"} md:block`}
         >
           <div className="bg-[#202020] h-full p-2 shadow-2xl rounded-md">
-            <FileExplorer setFileContent={setFileContent} />
+            <FileExplorer openTab={openTab} />
           </div>
         </Panel>
 
@@ -70,7 +79,17 @@ export default function Home() {
             <PanelGroup direction="vertical">
               <Panel defaultSize={70} minSize={30} className="">
                 <div className="h-full bg-[#202020] rounded-lg shadow-lg p-4">
-                  <Editor fileContent={fileContent} onContentChange={handleEditorChange} />
+                  <Tabs
+                    tabs={tabs}
+                    currentTab={currentTab}
+                    setCurrentTab={setCurrentTab}
+                    closeTab={closeTab}
+                  />
+                  <Editor
+                    fileContent={
+                      tabs.find((tab) => tab.name === currentTab)?.content || ""
+                    }
+                  />
                 </div>
               </Panel>
 
