@@ -17,7 +17,7 @@ function Tabs({ tabs, currentTab, setCurrentTab, closeTab }) {
               e.stopPropagation();
               closeTab(tab.name);
             }}
-            className="ml-2 hover:text-red-500"
+            className="ml-2 hover:text-red-500 cursor-pointer"
           >
             ×
           </button>
