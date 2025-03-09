@@ -6,6 +6,7 @@ import FileExplorer from "@/components/FileExplorar/FileExplorer";
 import AiAssistant from "@/components/AiAssistant/AiAssistant";
 import Editor from "@/components/Editor/Editor";
 import Terminal from "@/components/Terminal/Terminal";
+
 export default function Home() {
   const [isLeftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [isRightSidebarOpen, setRightSidebarOpen] = useState(false);
@@ -29,6 +30,10 @@ export default function Home() {
   const toggleRightSidebar = () => {
     setRightSidebarOpen(!isRightSidebarOpen);
     setLeftSidebarOpen(false);
+  };
+
+  const handleEditorChange = (newContent) => {
+    setFileContent(newContent);
   };
 
   if (!isClient) {
@@ -65,7 +70,7 @@ export default function Home() {
             <PanelGroup direction="vertical">
               <Panel defaultSize={70} minSize={30} className="">
                 <div className="h-full bg-[#202020] rounded-lg shadow-lg p-4">
-                  <Editor fileContent={fileContent} />
+                  <Editor fileContent={fileContent} onContentChange={handleEditorChange} />
                 </div>
               </Panel>
 
