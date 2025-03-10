@@ -1,10 +1,20 @@
+import { Textarea } from 'flowbite-react'
 import React from 'react'
 
-function Terminal() {
+function Terminal({currentOutput}) {
   return (
-    <div>
-      this is terminal
-    </div>
+    <textarea
+      className="w-full h-full bg-transparent text-white font-mono resize-none outline-none"
+      placeholder="Console"
+      value={currentOutput}
+      disabled
+      style={{
+        lineHeight: "1.5",
+        fontSize: "14px",
+        scrollbarWidth: "thin",
+        scrollbarColor: "#858585 transparent",
+      }}
+    />
   )
 }
 

@@ -6,6 +6,7 @@ import Editor from "@/components/Editor/Editor";
 import Terminal from "@/components/Terminal/Terminal";
 import Tabs from "../Tabs/Tabs";
 import InputTaking from "../InputTaking/InputTaking";
+import axios from "axios";
 
 function EditorPanel({ tabs, setTabs, currentTab, setCurrentTab }) {
   const [currentInput, setCurrentInput] = useState("");
@@ -18,6 +19,7 @@ function EditorPanel({ tabs, setTabs, currentTab, setCurrentTab }) {
       setCurrentTab(tabs.length > 1 ? tabs[0].name : null);
     }
   };
+
   const encode = (str) => {
     return Buffer.from(str, "binary").toString("base64");
   };
@@ -34,7 +36,7 @@ function EditorPanel({ tabs, setTabs, currentTab, setCurrentTab }) {
       headers: {
         "content-type": "application/json",
         "Content-Type": "application/json",
-        "X-RapidAPI-Key": "b4e5c5a05fmsh9adf6ec091523f8p165338jsncc58f31c26e1",
+        "X-RapidAPI-Key": process.env.NEXT_PUBLIC_JUDGE_API,
         "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
       },
       data: JSON.stringify({
@@ -44,8 +46,13 @@ function EditorPanel({ tabs, setTabs, currentTab, setCurrentTab }) {
       }),
     };
 
-    const res = await axios.request(options);
-    return res.data.token;
+    try {
+      const res = await axios.request(options);
+      return res.data.token;
+    } catch (error) {
+      console.error("Error posting submission:", error);
+      throw error;
+    }
   };
 
   const getOutput = async (token) => {
@@ -54,49 +61,61 @@ function EditorPanel({ tabs, setTabs, currentTab, setCurrentTab }) {
       url: "https://judge0-ce.p.rapidapi.com/submissions/" + token,
       params: { base64_encoded: "true", fields: "*" },
       headers: {
-        "X-RapidAPI-Key": "3ed7a75b44mshc9e28568fe0317bp17b5b2jsn6d89943165d8",
+        "X-RapidAPI-Key": process.env.NEXT_PUBLIC_JUDGE_API,
         "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
       },
     };
 
-    // call the api
-    const res = await axios.request(options);
-    if (res.data.status_id <= 2) {
-      const res2 = await getOutput(token);
-      return res2.data;
+    try {
+      const res = await axios.request(options);
+
+      if (res.data.status_id <= 2) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        return getOutput(token);
+      }
+
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching output:", error);
+      throw error;
     }
-    return res.data;
   };
 
   const runCode = async () => {
-    console.log(getContent);
-    return;
-    const language_id = 103; //for c
-    const source_code = encode(getContent);
-    const stdin = encode(currentInput);
+    try {
+      const language_id = 103; // For C
+      const source_code = encode(getContent);
+      const stdin = encode(currentInput);
 
-    const token = await postSubmission(language_id, source_code, stdin);
+      const token = await postSubmission(language_id, source_code, stdin);
+      // console.log("Submission token:", token);
 
-    const res = await getOutput(token);
-    const status_name = res.status.description;
-    const decoded_output = decode(res.stdout ? res.stdout : "");
-    const decoded_compile_output = decode(
-      res.compile_output ? res.compile_output : ""
-    );
-    const decoded_error = decode(res.stderr ? res.stderr : "");
+      const res = await getOutput(token);
 
-    let final_output = "";
-    if (res.status_id !== 3) {
-      if (decoded_compile_output === "") {
-        final_output = decoded_error;
+      const status_name = res.status.description;
+      const decoded_output = decode(res.stdout ? res.stdout : "");
+      const decoded_compile_output = decode(
+        res.compile_output ? res.compile_output : ""
+      );
+      const decoded_error = decode(res.stderr ? res.stderr : "");
+
+      let final_output = "";
+      if (res.status_id !== 3) {
+        final_output =
+          decoded_compile_output === ""
+            ? decoded_error
+            : decoded_compile_output;
       } else {
-        final_output = decoded_compile_output;
+        final_output = decoded_output;
       }
-    } else {
-      final_output = decoded_output;
+
+      setCurrentOutput(status_name + "\n\n" + final_output);
+    } catch (error) {
+      console.error("Error running code:", error);
+      setCurrentOutput("Error: Failed to execute code. Please try again.");
     }
-    setCurrentOutput(status_name + "\n\n" + final_output);
   };
+
   return (
     <div className="h-full rounded-md">
       <PanelGroup direction="vertical">
@@ -112,7 +131,7 @@ function EditorPanel({ tabs, setTabs, currentTab, setCurrentTab }) {
               <button
                 type="button"
                 onClick={runCode}
-                class="focus:outline-none cursor-pointer text-white bg-purple-900 hover:bg-purple-900 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-purple-900 dark:hover:bg-purple-900 dark:focus:ring-purple-900"
+                className="focus:outline-none cursor-pointer text-white bg-purple-900 hover:bg-purple-900 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-purple-900 dark:hover:bg-purple-900 dark:focus:ring-purple-900"
               >
                 Run
               </button>
@@ -132,7 +151,7 @@ function EditorPanel({ tabs, setTabs, currentTab, setCurrentTab }) {
           <div className="bg-[#202020] h-full rounded-lg shadow-lg p-4">
             <PanelGroup direction="horizontal">
               <Panel defaultSize={50} minSize={30} className="">
-                <Terminal />
+                <Terminal currentOutput={currentOutput} />
               </Panel>
 
               <PanelResizeHandle className="border-3 border-black cursor-row-resize block" />
