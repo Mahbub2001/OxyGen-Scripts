@@ -1,14 +1,20 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
-function Editor({ fileContent, onContentChange }) {
+function Editor({ fileContent,setGetContent, onContentChange }) {
   const [content, setContent] = useState(fileContent);
   const textareaRef = useRef(null);
   const lineNumbersRef = useRef(null);
-
+  // console.log(content);
+  
   useEffect(() => {
     setContent(fileContent);
   }, [fileContent]);
+
+  useEffect(() => {
+    setGetContent(content);
+  }, [content, setGetContent]);
+
 
   const handleChange = (e) => {
     const newContent = e.target.value;

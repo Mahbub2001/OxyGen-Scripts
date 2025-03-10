@@ -41,7 +41,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen w-full sticky">
+    <div className="h-screen w-full sticky md:fixed">
       <div className="md:hidden flex justify-between p-4">
         <button onClick={toggleLeftSidebar}>
           <Menu className="h-6 w-6" />
