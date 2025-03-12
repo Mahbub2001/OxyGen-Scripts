@@ -10,7 +10,7 @@ export default function Navbar() {
     <nav className="flex items-center justify-between  text-white px-4 py-2">
       {/* Left side */}
       <div className="flex items-center space-x-3">
-        <button className="text-lg font-medium">Neon</button>
+        <button className="text-lg font-medium">OxyGen</button>
       </div>
 
       {/* Center */}

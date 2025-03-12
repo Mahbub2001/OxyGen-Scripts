@@ -120,7 +120,7 @@ function EditorPanel({ tabs, setTabs, currentTab, setCurrentTab }) {
     <div className="h-full rounded-md">
       <PanelGroup direction="vertical">
         <Panel defaultSize={70} minSize={30} className="">
-          <div className="h-full bg-[#202020] rounded-lg shadow-lg p-4">
+          <div className="h-full bg-[#202020] rounded-lg shadow-lg p-2">
             <div className="flex justify-between">
               <Tabs
                 tabs={tabs}
@@ -131,7 +131,7 @@ function EditorPanel({ tabs, setTabs, currentTab, setCurrentTab }) {
               <button
                 type="button"
                 onClick={runCode}
-                className="focus:outline-none cursor-pointer text-white bg-purple-900 hover:bg-purple-900 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-purple-900 dark:hover:bg-purple-900 dark:focus:ring-purple-900"
+                className="focus:outline-none cursor-pointer text-white bg-purple-900 hover:bg-purple-900 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-1.5 mb-2 dark:bg-purple-900 dark:hover:bg-purple-900 dark:focus:ring-purple-900"
               >
                 Run
               </button>
@@ -147,7 +147,7 @@ function EditorPanel({ tabs, setTabs, currentTab, setCurrentTab }) {
 
         <PanelResizeHandle className="border-3 border-transparent cursor-col-resize block" />
 
-        <Panel defaultSize={30} minSize={30} className="">
+        <Panel defaultSize={30} minSize={0} className="">
           <div className="bg-[#202020] h-full rounded-lg shadow-lg p-4">
             <PanelGroup direction="horizontal">
               <Panel defaultSize={50} minSize={30} className="">
