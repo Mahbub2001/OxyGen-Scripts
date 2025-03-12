@@ -14,6 +14,7 @@ export default function Navbar() {
   };
   const openModal = () => {
     setIsModalOpen(true);
+    setIsOpen(!isOpen);
   };
 
   const closeModal = () => {
