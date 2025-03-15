@@ -1,22 +1,25 @@
 import axios from 'axios';
 
-  const processQuery = async (query, code, scenario, sessionId) => {
+const processQuery = async (query, code, scenario, sessionId) => {
     try {
-        const response = await axios.post('http://localhost:8000/query', {
-            query,
-            code,
-            scenario,
-            session_id: sessionId
-        }, {
-            withCredentials: true  
+        const payload = {
+            query: query,
+            code: code,
+            scenario: scenario,
+        };
+        if (sessionId) {
+            payload.session_id = sessionId;
+        }
+
+        const response = await axios.post('http://localhost:8000/query', payload, {
+            withCredentials: true,
         });
-        console.log(response.data);
+        return response;
     } catch (error) {
         console.error('Error processing query:', error);
         throw error;
     }
 };
-
 const getHistory = async (sessionId) => {
     try {
         const response = await axios.get(`http://localhost:8000/history/${sessionId}`);

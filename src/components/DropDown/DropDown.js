@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export const DropdownMenu = ({selectedScenario,setSelectedScenario,scenario_map}) => {
+export const DropdownMenu = ({scenario,setSelectedScenario,scenario_map}) => {
     const [isOpen, setIsOpen] = useState(false);
     return (
       <div className="relative">
@@ -8,7 +8,7 @@ export const DropdownMenu = ({selectedScenario,setSelectedScenario,scenario_map}
           onClick={() => setIsOpen(!isOpen)}
           className="cursor-pointer text-white p-1 rounded-lg focus:outline-none flex items-center"
         >
-          {selectedScenario}
+          {scenario}
           <svg
             className="w-4 h-4 ml-2"
             fill="none"
