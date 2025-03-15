@@ -41,7 +41,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen w-full sticky md:fixed">
+    <div className="h-full w-full sticky md:fixed">
       <div className="md:hidden flex justify-between p-4">
         <button onClick={toggleLeftSidebar}>
           <Menu className="h-6 w-6" />
@@ -55,7 +55,7 @@ export default function Home() {
         <Panel
           defaultSize={15}
           minSize={0}
-          maxSize={30}
+          maxSize={15}
           className={`${isLeftSidebarOpen ? "block" : "hidden"} md:block`}
         >
           <div className="bg-[#202020] h-full p-2 shadow-2xl rounded-md">
@@ -79,10 +79,10 @@ export default function Home() {
         <Panel
           defaultSize={15}
           minSize={0}
-          maxSize={30}
+          maxSize={40}
           className={`${isRightSidebarOpen ? "block" : "hidden"} md:block`}
         >
-          <div className="rounded-md h-full bg-[#202020] p-4">
+          <div className="rounded-md h-full bg-[#202020] ">
             <AiAssistant />
           </div>
         </Panel>
