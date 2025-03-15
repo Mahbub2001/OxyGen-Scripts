@@ -9,6 +9,8 @@ import { DropdownMenu } from "../DropDown/DropDown";
 import { processQuery } from "@/api/ai_assistant";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 const scenario_map = [
   "General Assistant",
@@ -58,6 +60,39 @@ function AiAssistant() {
     setUserQuery("");
   };
 
+  const renderers = {
+    code({ inline, className, children }) {
+      const match = /language-(\w+)/.exec(className || "");
+      const codeString = String(children).replace(/\n$/, "");
+
+      const copyToClipboard = () => {
+        navigator.clipboard.writeText(codeString);
+        alert("Code copied to clipboard!");
+      };
+
+      return !inline && match ? (
+        <div className="relative">
+          <button
+            onClick={copyToClipboard}
+            className="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600"
+          >
+            Copy
+          </button>
+          <SyntaxHighlighter
+            style={dracula}
+            language={match[1]}
+            PreTag="div"
+            className="rounded-md"
+          >
+            {codeString}
+          </SyntaxHighlighter>
+        </div>
+      ) : (
+        <code className="bg-gray-800 text-white p-1 rounded">{children}</code>
+      );
+    },
+  };
+
   return (
     <div className="flex flex-col text-white min-h-screen text-xs">
       <div className="flex flex-col justify-between flex-grow">
@@ -88,7 +123,7 @@ function AiAssistant() {
             <CiMenuKebab className="transform-flat" />
           </div>
         </div>
-        <div className="p-4 overflow-y-auto flex-grow">
+        <div className="p-4 overflow-y-auto flex-grow h-[500px] scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
           <div className="flex flex-col gap-4">
             {messages.map((message, index) => (
               <div
@@ -96,10 +131,13 @@ function AiAssistant() {
                 className={`p-1.5 rounded-lg max-w-[70%] ${
                   message.sender === "user"
                     ? "bg-[#28282c] self-end"
-                    : "self-start"
+                    : "bg-[#252526] self-start"
                 }`}
               >
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={renderers}
+                >
                   {message.text}
                 </ReactMarkdown>
               </div>
