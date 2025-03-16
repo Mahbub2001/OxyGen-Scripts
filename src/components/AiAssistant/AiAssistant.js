@@ -11,6 +11,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { motion } from "framer-motion";
 
 const scenario_map = [
   "General Assistant",
@@ -30,6 +31,7 @@ function AiAssistant() {
   const [sessionId, setSessionId] = useState(null);
   const [query, setUserQuery] = useState("");
   const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSendMessage = async () => {
     if (query.trim() === "") return;
@@ -41,6 +43,7 @@ function AiAssistant() {
     if (!sessionId) {
       setSessionId("");
     }
+    setIsLoading(true);
     try {
       const response = await processQuery(query, "", scenario, sessionId);
 
@@ -56,7 +59,7 @@ function AiAssistant() {
       };
       setMessages((prevMessages) => [...prevMessages, errorMessage]);
     }
-
+    setIsLoading(false);
     setUserQuery("");
   };
 
@@ -142,6 +145,31 @@ function AiAssistant() {
                 </ReactMarkdown>
               </div>
             ))}
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ repeat: Infinity, duration: 0.5 }}
+                className="p-2 rounded-lg max-w-[70%] bg-[#252526] self-start flex items-center gap-2"
+              >
+                <motion.span
+                  className="w-2 h-2 bg-white rounded-full"
+                  animate={{ y: [0, -3, 0] }}
+                  transition={{ repeat: Infinity, duration: 0.4 }}
+                />
+                <motion.span
+                  className="w-2 h-2 bg-white rounded-full"
+                  animate={{ y: [0, -3, 0] }}
+                  transition={{ repeat: Infinity, duration: 0.4, delay: 0.2 }}
+                />
+                <motion.span
+                  className="w-2 h-2 bg-white rounded-full"
+                  animate={{ y: [0, -3, 0] }}
+                  transition={{ repeat: Infinity, duration: 0.4, delay: 0.4 }}
+                />
+                <span className="ml-2">Processing...</span>
+              </motion.div>
+            )}
           </div>
         </div>
         <div className="pb-18 border-t border-gray-600 p-2">
@@ -167,6 +195,7 @@ function AiAssistant() {
             <button
               className="cursor-pointer p-2 text-gray-400 hover:text-white"
               onClick={handleSendMessage}
+              disabled={isLoading}
             >
               <FiSend />
             </button>

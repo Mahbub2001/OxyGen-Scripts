@@ -13,6 +13,7 @@
     "buffer": "^6.0.3",
     "file-saver": "^2.0.5",
     "flowbite-react": "^0.10.2",
+    "framer-motion": "^12.5.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.477.0",
     "motion": "^12.4.10",
