@@ -26,15 +26,16 @@ const scenario_map = [
   "Code Shortener",
 ];
 
-function AiAssistant() {
+function AiAssistant({ getContent }) {
   const [scenario, setSelectedScenario] = useState(scenario_map[0]);
   const [sessionId, setSessionId] = useState(null);
   const [query, setUserQuery] = useState("");
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  console.log(getContent);
 
   const handleSendMessage = async () => {
-    if (query.trim() === "") return;
+    // if (query.trim() === "") return;
 
     const userMessage = { text: query, sender: "user" };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
@@ -45,7 +46,19 @@ function AiAssistant() {
     }
     setIsLoading(true);
     try {
-      const response = await processQuery(query, "", scenario, sessionId);
+      const codeScenarios = [
+        "Code Shortener",
+        "Code Explanation",
+        "Code Commenting",
+        "Code Optimization",
+        "Code Completion",
+        "Code Correction",
+      ];
+
+      const code = codeScenarios.includes(scenario) ? getContent : "";
+
+      const response = await processQuery(query, code, scenario, sessionId);
+      // const response = await processQuery(query, scenario == "" , scenario, sessionId);
 
       console.log("AI response:", response.data);
       const aiMessage = { text: response.data.response, sender: "ai" };
@@ -131,7 +144,7 @@ function AiAssistant() {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`p-1.5 rounded-lg max-w-[70%] ${
+                className={`p-1.5 rounded-lg max-w-[100%] ${
                   message.sender === "user"
                     ? "bg-[#28282c] self-end"
                     : "bg-[#252526] self-start"

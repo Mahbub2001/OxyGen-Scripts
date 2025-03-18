@@ -8,10 +8,16 @@ import Tabs from "../Tabs/Tabs";
 import InputTaking from "../InputTaking/InputTaking";
 import axios from "axios";
 
-function EditorPanel({ tabs, setTabs, currentTab, setCurrentTab }) {
+function EditorPanel({
+  tabs,
+  setTabs,
+  currentTab,
+  setCurrentTab,
+  setGetContent,
+  getContent,
+}) {
   const [currentInput, setCurrentInput] = useState("");
   const [currentOutput, setCurrentOutput] = useState("");
-  const [getContent, setGetContent] = useState("");
 
   const closeTab = (tabName) => {
     setTabs((prevTabs) => prevTabs.filter((tab) => tab.name !== tabName));

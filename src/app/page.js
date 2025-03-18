@@ -13,6 +13,7 @@ export default function Home() {
   const [expanded, setExpanded] = useState(true);
   const [tabs, setTabs] = useState([]);
   const [currentTab, setCurrentTab] = useState(null);
+  const [getContent, setGetContent] = useState("");
 
   useEffect(() => {
     setIsClient(true);
@@ -71,6 +72,8 @@ export default function Home() {
             setTabs={setTabs}
             currentTab={currentTab}
             setCurrentTab={setCurrentTab}
+            setGetContent={setGetContent}
+            getContent={getContent}
           />
         </Panel>
 
@@ -83,7 +86,7 @@ export default function Home() {
           className={`${isRightSidebarOpen ? "block" : "hidden"} md:block`}
         >
           <div className="rounded-md h-full bg-[#202020] ">
-            <AiAssistant />
+            <AiAssistant getContent={getContent} />
           </div>
         </Panel>
       </PanelGroup>
