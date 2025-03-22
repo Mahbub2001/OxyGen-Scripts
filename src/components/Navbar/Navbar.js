@@ -4,10 +4,13 @@ import { FaUserCircle, FaCog, FaComments, FaDownload } from "react-icons/fa";
 import { FiMoreVertical } from "react-icons/fi";
 import { MdOutlineNoteAlt, MdOutlinePlagiarism } from "react-icons/md";
 import GenerateReportModal from "../GenerateReport/GenerateReportModal ";
-
+import CollaborationModal from "../CollaborationModal/CollaborationModal";
+import LiveCollaborationForm from "../LiveCollaborationForm/LiveCollaborationForm";
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCollaborationModalOpen, setIsCollaborationModalOpen] =
+    useState(false);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -19,6 +22,14 @@ export default function Navbar() {
 
   const closeModal = () => {
     setIsModalOpen(false);
+  };
+  const openCollaborationModal = () => {
+    setIsCollaborationModalOpen(true);
+    setIsOpen(!isOpen);
+  };
+
+  const closeCollaborationModal = () => {
+    setIsCollaborationModalOpen(false);
   };
 
   return (
@@ -65,11 +76,12 @@ export default function Navbar() {
               Check Plagiarism
             </button>
             <button
+              onClick={openCollaborationModal}
               type="button"
               className="cursor-pointer relative inline-flex items-center w-full px-4 py-2 text-xs font-medium border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-white dark:focus:ring-gray-500 dark:focus:text-white"
             >
               <FaComments className="w-3 h-3 me-1" />
-              Messages
+              Live Collaboration
             </button>
             <button
               type="button"
@@ -82,6 +94,12 @@ export default function Navbar() {
         )}
       </div>
       <GenerateReportModal isOpen={isModalOpen} onClose={closeModal} />
+      <CollaborationModal
+        isOpen={isCollaborationModalOpen}
+        onClose={closeCollaborationModal}
+      >
+        <LiveCollaborationForm onClose={closeCollaborationModal} />
+      </CollaborationModal>
     </nav>
   );
 }
