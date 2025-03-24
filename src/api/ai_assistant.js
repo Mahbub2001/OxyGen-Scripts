@@ -1,11 +1,13 @@
 import axios from 'axios';
 
-const processQuery = async (query, code, scenario, sessionId) => {
+const processQuery = async (query, code, scenario, sessionId, images = []) => {
+    console.log(images);    
     try {
         const payload = {
             query: query,
             code: code,
             scenario: scenario,
+            images: images
         };
         if (sessionId) {
             payload.session_id = sessionId;

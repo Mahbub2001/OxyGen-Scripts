@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { RiGeminiLine } from "react-icons/ri";
 import { RxCross2 } from "react-icons/rx";
 import { FiPaperclip, FiPlus, FiSend } from "react-icons/fi";
@@ -32,12 +32,26 @@ function AiAssistant({ getContent }) {
   const [query, setUserQuery] = useState("");
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  console.log(getContent);
-
+  const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const fileInputRef = useRef(null);
+  // console.log(getContent);
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64String = reader.result.split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+  
   const handleSendMessage = async () => {
     // if (query.trim() === "") return;
 
-    const userMessage = { text: query, sender: "user" };
+    const userMessage = { text: query, sender: "user", images: imagePreviews };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
 
     console.log("User input:", query);
@@ -57,7 +71,17 @@ function AiAssistant({ getContent }) {
 
       const code = codeScenarios.includes(scenario) ? getContent : "";
 
-      const response = await processQuery(query, code, scenario, sessionId);
+      const imageBase64Array = await Promise.all(
+        images.map((file) => convertToBase64(file))
+      );
+
+      const response = await processQuery(
+        query,
+        code,
+        scenario,
+        sessionId,
+        imageBase64Array
+      );
       // const response = await processQuery(query, scenario == "" , scenario, sessionId);
 
       console.log("AI response:", response.data);
@@ -74,6 +98,39 @@ function AiAssistant({ getContent }) {
     }
     setIsLoading(false);
     setUserQuery("");
+    setImages([]);
+    setImagePreviews([]);
+  };
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + images.length > 3) {
+      alert("You can only upload up to 3 images");
+      return;
+    }
+  
+    const newImages = [...images, ...files.slice(0, 3 - images.length)];
+    setImages(newImages);
+      const newPreviews = newImages.map(file => URL.createObjectURL(file));
+    setImagePreviews(newPreviews);
+        e.target.value = '';
+  };
+
+  const removeImage = (index) => {
+    const newImages = [...images];
+    newImages.splice(index, 1);
+    setImages(newImages);
+
+    const newPreviews = [...imagePreviews];
+    URL.revokeObjectURL(newPreviews[index]); 
+    newPreviews.splice(index, 1);
+    setImagePreviews(newPreviews);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
   const renderers = {
@@ -186,6 +243,26 @@ function AiAssistant({ getContent }) {
           </div>
         </div>
         <div className="pb-18 border-t border-gray-600 p-2">
+          {/* Image previews */}
+          {imagePreviews.length > 0 && (
+            <div className="flex gap-2 mb-2">
+              {imagePreviews.map((preview, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={preview}
+                    alt={`Preview ${index}`}
+                    className="h-16 w-16 object-cover rounded"
+                  />
+                  <button
+                    onClick={() => removeImage(index)}
+                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <textarea
             placeholder="Type your message..."
             className="w-full p-2 bg-[#252526] text-white rounded-lg focus:outline-none resize-none overflow-y-auto max-h-48"
@@ -196,19 +273,33 @@ function AiAssistant({ getContent }) {
               e.target.style.height = "auto";
               e.target.style.height = `${e.target.scrollHeight}px`;
             }}
+            onKeyDown={handleKeyDown}
           />
           <div className="flex items-center justify-between p-2 bg-[#1e1e20]">
-            <label className="flex items-center cursor-pointer">
-              <input type="file" className="hidden" />
-              <span className="flex items-center p-2 text-gray-400 hover:text-white">
+            <div className="flex items-center">
+              <input
+                type="file"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                accept="image/*"
+                multiple
+                id="file-upload" 
+              />
+              <label
+                htmlFor="file-upload" 
+                className="flex items-center p-2 text-gray-400 hover:text-white cursor-pointer"
+              >
                 <FiPaperclip className="mr-2" />
-                Add an attachment
-              </span>
-            </label>
+                Add an attachment ({images.length}/3)
+              </label>
+            </div>
             <button
               className="cursor-pointer p-2 text-gray-400 hover:text-white"
               onClick={handleSendMessage}
-              disabled={isLoading}
+              disabled={
+                isLoading || (query.trim() === "" && images.length === 0)
+              }
             >
               <FiSend />
             </button>

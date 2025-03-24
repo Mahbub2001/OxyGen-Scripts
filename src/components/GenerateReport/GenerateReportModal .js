@@ -3,6 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { toast } from "react-toastify";
 
 const GenerateReportModal = ({ isOpen, onClose }) => {
   const [files, setFiles] = useState([]);
@@ -19,7 +20,10 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
     formData.append("question", question);
-
+    const toastId = toast.info("Uploading files and analyzing...", {
+      autoClose: false,
+      closeButton: false,
+    });
     try {
       const response = await axios.post(
         "http://localhost:8000/analyze-codes",
@@ -31,13 +35,17 @@ const GenerateReportModal = ({ isOpen, onClose }) => {
         }
       );
       setResults(response.data);
-      createAndDownloadZip(response.data);
+      await createAndDownloadZip(response.data);
+      toast.dismiss(toastId);
+      toast.success("Files uploaded and analyzed successfully!");
     } catch (error) {
       console.error("Error uploading files:", error);
+      toast.dismiss(toastId);
+      toast.error("An error occurred while processing the files.");
     }
   };
 
-  const createAndDownloadZip = (results) => {
+  const createAndDownloadZip = async(results) => {
     const zip = new JSZip();
 
     results.forEach((result) => {

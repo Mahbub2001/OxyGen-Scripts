@@ -8,21 +8,22 @@ import "codemirror/mode/javascript/javascript";
 import "codemirror/addon/edit/closetag";
 import "codemirror/addon/edit/closebrackets";
 import ACTIONS from "@/Action";
+
 const LiveEditor = ({ socketRef, roomId, onCodeChange }) => {
   const editorRef = useRef(null);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     async function init() {
-      editorRef.current = Codemirror.fromTextArea(
-        document.getElementById("realtimeEditor"),
-        {
-          mode: { name: "javascript", json: true },
-          theme: "dracula",
-          autoCloseTags: true,
-          autoCloseBrackets: true,
-          lineNumbers: true,
-        }
-      );
+      if (editorRef.current) return; 
+
+      editorRef.current = Codemirror.fromTextArea(textareaRef.current, {
+        mode: { name: "javascript", json: true },
+        theme: "dracula",
+        autoCloseTags: true,
+        autoCloseBrackets: true,
+        lineNumbers: true,
+      });
 
       editorRef.current.on("change", (instance, changes) => {
         const { origin } = changes;
@@ -37,12 +38,19 @@ const LiveEditor = ({ socketRef, roomId, onCodeChange }) => {
       });
     }
     init();
+
+    return () => {
+      if (editorRef.current) {
+        editorRef.current.toTextArea();
+        editorRef.current = null;
+      }
+    };
   }, []);
 
   useEffect(() => {
     if (socketRef.current) {
       socketRef.current.on(ACTIONS.CODE_CHANGE, ({ code }) => {
-        if (code !== null) {
+        if (code !== null && editorRef.current) {
           editorRef.current.setValue(code);
         }
       });
@@ -55,7 +63,7 @@ const LiveEditor = ({ socketRef, roomId, onCodeChange }) => {
     };
   }, [socketRef.current]);
 
-  return <textarea id="realtimeEditor" />;
+  return <textarea id="realtimeEditor" ref={textareaRef} />;
 };
 
 export default LiveEditor;
