@@ -6,11 +6,13 @@ import { MdOutlineNoteAlt, MdOutlinePlagiarism } from "react-icons/md";
 import GenerateReportModal from "../GenerateReport/GenerateReportModal ";
 import CollaborationModal from "../CollaborationModal/CollaborationModal";
 import LiveCollaborationForm from "../LiveCollaborationForm/LiveCollaborationForm";
+import PlagiarismCheckModal from "../PlagiarismCheckModal/PlagiarismCheckModal";
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCollaborationModalOpen, setIsCollaborationModalOpen] =
     useState(false);
+  const [isPlagiarismModalOpen, setIsPlagiarismModalOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -31,6 +33,14 @@ export default function Navbar() {
   const closeCollaborationModal = () => {
     setIsCollaborationModalOpen(false);
   };
+  const openPlagiarismModal = () => {
+    setIsPlagiarismModalOpen(true);
+    setIsOpen(!isOpen);
+  };
+
+  const closePlagiarismModal = () => {
+    setIsPlagiarismModalOpen(false);
+  };
 
   return (
     <nav className="flex items-center justify-between text-white px-4 py-2">
@@ -46,8 +56,6 @@ export default function Navbar() {
         />
         <span className="ml-2 text-gray-400 text-xs">Ctrl + K</span> */}
       </div>
-
-      {/* Right side */}
       <div className="relative">
         <button
           className="p-2 focus:outline-none cursor-pointer"
@@ -70,6 +78,7 @@ export default function Navbar() {
             </button>
             <button
               type="button"
+              onClick={openPlagiarismModal}
               className="cursor-pointer relative inline-flex items-center w-full px-4 py-2 text-xs font-medium border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-white dark:focus:ring-gray-500 dark:focus:text-white"
             >
               <MdOutlinePlagiarism className="w-3 h-3 me-1" />
@@ -100,6 +109,10 @@ export default function Navbar() {
       >
         <LiveCollaborationForm onClose={closeCollaborationModal} />
       </CollaborationModal>
+      <PlagiarismCheckModal
+        isOpen={isPlagiarismModalOpen}
+        onClose={closePlagiarismModal}
+      />
     </nav>
   );
 }
