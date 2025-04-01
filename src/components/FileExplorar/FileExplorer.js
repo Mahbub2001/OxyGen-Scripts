@@ -8,6 +8,7 @@ import {
   MdChevronLeft,
   MdCreateNewFolder,
   MdNoteAdd,
+  MdDelete,
 } from "react-icons/md";
 import SearchBox from "../SearchBox/SearchBox";
 import { FiLogIn, FiLogOut, FiRefreshCw } from "react-icons/fi";
@@ -27,6 +28,8 @@ export default function FileExplorer({ openTab }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newItemName, setNewItemName] = useState("");
   const [createType, setCreateType] = useState(""); 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   useEffect(() => {
     if (source === "drive" && typeof window !== "undefined") {
@@ -219,6 +222,38 @@ export default function FileExplorer({ openTab }) {
     }));
   };
 
+  const deleteItem = async () => {
+    if (!itemToDelete || !window.gapi?.client?.drive) {
+      setShowDeleteModal(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await window.gapi.client.drive.files.delete({
+        fileId: itemToDelete.id,
+      });
+
+      // Refresh the file list
+      if (currentHandle) {
+        const response = await window.gapi.client.drive.files.list({
+          q: `'${currentHandle.id}' in parents`,
+          fields: "files(id, name, mimeType, modifiedTime)",
+        });
+        setEntries(response.result.files);
+      } else {
+        await listDriveFiles();
+      }
+
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+    } catch (err) {
+      console.error("Error deleting item:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const createNewItem = async () => {
     if (!newItemName.trim() || !window.gapi?.client?.drive) {
       setShowCreateModal(false);
@@ -272,7 +307,7 @@ export default function FileExplorer({ openTab }) {
       } else {
         await listDriveFiles();
       }
-
+      
       setShowCreateModal(false);
       setNewItemName("");
     } catch (err) {
@@ -339,6 +374,35 @@ export default function FileExplorer({ openTab }) {
                 className="px-4 py-2 bg-blue-600 rounded"
               >
                 Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+       {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#252526] p-4 rounded-lg w-80">
+            <h3 className="text-lg mb-4">Confirm Delete</h3>
+            <p className="mb-4">
+              Are you sure you want to delete {`${itemToDelete?.name}`} ?
+              <br />
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setItemToDelete(null);
+                }}
+                className="px-4 py-2 bg-[#3E3E42] rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteItem}
+                className="px-4 py-2 bg-red-600 rounded"
+              >
+                Delete
               </button>
             </div>
           </div>
@@ -439,15 +503,18 @@ export default function FileExplorer({ openTab }) {
               </div>
             ) : (
               <ul className="mt-2">
-                {entries.map((entry, index) => (
-                  <li
-                    key={index}
+              {entries.map((entry, index) => (
+                <li
+                  key={index}
+                  className="group flex items-center justify-between p-1 hover:bg-[#3E3E42] rounded cursor-pointer"
+                >
+                  <div 
+                    className="flex items-center space-x-2 flex-1"
                     onClick={() =>
                       source === "local"
                         ? handleEntryClick(entry)
                         : handleDriveFileClick(entry)
                     }
-                    className="flex items-center space-x-2 p-1 hover:bg-[#3E3E42] rounded cursor-pointer"
                   >
                     {source === "local" ? (
                       entry.kind === "directory" ? (
@@ -462,9 +529,23 @@ export default function FileExplorer({ openTab }) {
                       <MdInsertDriveFile />
                     )}
                     <span>{entry.name}</span>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                  {source === "drive" && isSignedIn && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setItemToDelete(entry);
+                        setShowDeleteModal(true);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 p-1"
+                      title="Delete"
+                    >
+                      <MdDelete size={16} />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
             )}
           </div>
         )}
