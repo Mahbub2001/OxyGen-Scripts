@@ -78,7 +78,7 @@ export default function FileExplorer({ openTab }) {
 
   const listDriveFiles = async () => {
     if (!window.gapi?.client?.drive) return;
-
+  
     try {
       setIsLoading(true);
       const response = await window.gapi.client.drive.files.list({
@@ -86,20 +86,31 @@ export default function FileExplorer({ openTab }) {
         fields: "files(id, name, mimeType, parents, modifiedTime)",
         orderBy: "modifiedTime desc",
       });
-
+  
       const allFiles = response.result.files;
       const cFiles = allFiles.filter((file) => file.name.endsWith(".c"));
-      const cFileFolderIds = new Set(
-        cFiles.map((file) => file.parents?.[0]).filter(Boolean)
-      );
-
-      const filteredFolders = allFiles.filter(
-        (file) =>
-          file.mimeType === "application/vnd.google-apps.folder" &&
-          cFileFolderIds.has(file.id)
-      );
-
-      setEntries([...filteredFolders, ...cFiles]);
+      
+      const rootCFiles = cFiles.filter(file => {
+        if (!file.parents || file.parents.length === 0) return true;
+        return !allFiles.some(f => f.id === file.parents[0]);
+      });
+      const foldersWithCFiles = allFiles.filter(file => {
+        if (file.mimeType !== "application/vnd.google-apps.folder") return false;
+        
+        const hasDirectCFiles = cFiles.some(cFile => 
+          cFile.parents && cFile.parents.includes(file.id)
+        );
+        
+        const hasChildFoldersWithCFiles = allFiles.some(f => 
+          f.mimeType === "application/vnd.google-apps.folder" &&
+          f.parents && f.parents.includes(file.id) &&
+          cFiles.some(cFile => cFile.parents && cFile.parents.includes(f.id))
+        );
+        
+        return hasDirectCFiles || hasChildFoldersWithCFiles;
+      });
+  
+      setEntries([...foldersWithCFiles, ...rootCFiles]);
     } catch (err) {
       console.error("Error listing files:", err);
     } finally {
