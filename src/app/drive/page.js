@@ -100,10 +100,6 @@ function GoogleDriveExplorer() {
     alert("File saved successfully!");
   };
 
-  console.log("Files:", files); // Debugging line
-  console.log("Selected File:", selectedFile); // Debugging line
-  
-
   return (
     <>
       <Script
