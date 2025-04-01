@@ -6,6 +6,8 @@ import {
   MdInsertDriveFile,
   MdChevronRight,
   MdChevronLeft,
+  MdCreateNewFolder,
+  MdNoteAdd,
 } from "react-icons/md";
 import SearchBox from "../SearchBox/SearchBox";
 import { FiLogIn, FiLogOut, FiRefreshCw } from "react-icons/fi";
@@ -22,6 +24,9 @@ export default function FileExplorer({ openTab }) {
   const [source, setSource] = useState("local");
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newItemName, setNewItemName] = useState("");
+  const [createType, setCreateType] = useState(""); 
 
   useEffect(() => {
     if (source === "drive" && typeof window !== "undefined") {
@@ -214,6 +219,69 @@ export default function FileExplorer({ openTab }) {
     }));
   };
 
+  const createNewItem = async () => {
+    if (!newItemName.trim() || !window.gapi?.client?.drive) {
+      setShowCreateModal(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      if (createType === "folder") {
+        await window.gapi.client.drive.files.create({
+          resource: {
+            name: newItemName,
+            mimeType: "application/vnd.google-apps.folder",
+            parents: currentHandle ? [currentHandle.id] : [],
+          },
+        });
+      } else {
+        const metadata = {
+          name: newItemName.endsWith('.c') ? newItemName : `${newItemName}.c`,
+          mimeType: "text/plain",
+          parents: currentHandle ? [currentHandle.id] : [],
+        };
+
+        const fileContent = ""; 
+        
+        const form = new FormData();
+        form.append(
+          "metadata",
+          new Blob([JSON.stringify(metadata)], { type: "application/json" })
+        );
+        form.append("file", new Blob([fileContent], { type: "text/plain" }));
+
+        await fetch(
+          "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${window.gapi.auth.getToken().access_token}`,
+            },
+            body: form,
+          }
+        );
+      }
+      if (currentHandle) {
+        const response = await window.gapi.client.drive.files.list({
+          q: `'${currentHandle.id}' in parents`,
+          fields: "files(id, name, mimeType, modifiedTime)",
+        });
+        setEntries(response.result.files);
+      } else {
+        await listDriveFiles();
+      }
+
+      setShowCreateModal(false);
+      setNewItemName("");
+    } catch (err) {
+      console.error("Error creating item:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="h-full bg-[#252526] text-[#CCCCCC] p-2 text-sm">
       <div className="max-w-sm mx-auto border border-gray-600 rounded-sm shadow-lg">
@@ -241,7 +309,41 @@ export default function FileExplorer({ openTab }) {
           </button>
         </div>
       </div>
-
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#252526] p-4 rounded-lg w-80">
+            <h3 className="text-lg mb-4">
+              New {createType === "file" ? "File" : "Folder"}
+            </h3>
+            <input
+              type="text"
+              value={newItemName}
+              onChange={(e) => setNewItemName(e.target.value)}
+              placeholder={`Enter ${createType} name`}
+              className="w-full bg-[#1E1E1E] text-white p-2 rounded mb-4"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && createNewItem()}
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setNewItemName("");
+                }}
+                className="px-4 py-2 bg-[#3E3E42] rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={createNewItem}
+                className="px-4 py-2 bg-blue-600 rounded"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="">
         <div
           className="flex items-center justify-between cursor-pointer"
@@ -266,20 +368,40 @@ export default function FileExplorer({ openTab }) {
             <div className="flex space-x-1">
               {isSignedIn ? (
                 <>
-                  <button
-                    onClick={listDriveFiles}
-                    className="p-1 hover:bg-[#3E3E42] rounded"
-                    title="Refresh"
-                  >
-                    <FiRefreshCw size={16} />
-                  </button>
-                  <button
-                    onClick={handleDriveSignOut}
-                    className="p-1 hover:bg-[#3E3E42] rounded"
-                  >
-                    <FiLogOut size={16} />
-                  </button>
-                </>
+                <button
+                  onClick={() => {
+                    setCreateType("file");
+                    setShowCreateModal(true);
+                  }}
+                  className="p-1 hover:bg-[#3E3E42] rounded"
+                  title="New File"
+                >
+                  <MdNoteAdd size={16} />
+                </button>
+                <button
+                  onClick={() => {
+                    setCreateType("folder");
+                    setShowCreateModal(true);
+                  }}
+                  className="p-1 hover:bg-[#3E3E42] rounded"
+                  title="New Folder"
+                >
+                  <MdCreateNewFolder size={16} />
+                </button>
+                <button
+                  onClick={listDriveFiles}
+                  className="p-1 hover:bg-[#3E3E42] rounded"
+                  title="Refresh"
+                >
+                  <FiRefreshCw size={16} />
+                </button>
+                <button
+                  onClick={handleDriveSignOut}
+                  className="p-1 hover:bg-[#3E3E42] rounded"
+                >
+                  <FiLogOut size={16} />
+                </button>
+              </>
               ) : (
                 <button
                   onClick={handleDriveSignIn}
