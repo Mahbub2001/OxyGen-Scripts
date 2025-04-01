@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   MdKeyboardArrowDown,
   MdFolder,
@@ -8,6 +8,7 @@ import {
   MdChevronLeft,
 } from "react-icons/md";
 import SearchBox from "../SearchBox/SearchBox";
+import { FiLogIn, FiLogOut, FiRefreshCw } from "react-icons/fi";
 
 export default function FileExplorer({ openTab }) {
   const [entries, setEntries] = useState([]);
@@ -18,6 +19,116 @@ export default function FileExplorer({ openTab }) {
     search: false,
     sourceControl: false,
   });
+  const [source, setSource] = useState("local"); 
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (source === 'drive' && typeof window !== 'undefined') {
+      const loadGapi = async () => {
+        try {
+          const gapi = await import("gapi-script");
+          await gapi.gapi.load("client:auth2", () => {
+            gapi.gapi.client.init({
+              apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
+              clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+              discoveryDocs: [
+                "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
+              ],
+              scope: "https://www.googleapis.com/auth/drive.file",
+            }).then(() => {
+              gapi.gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+              updateSigninStatus(gapi.gapi.auth2.getAuthInstance().isSignedIn.get());
+            });
+          });
+        } catch (err) {
+          console.error("GAPI Initialization Error:", err);
+        }
+      };
+
+      loadGapi();
+    }
+  }, [source]);
+
+  const updateSigninStatus = (isSignedIn) => {
+    setIsSignedIn(isSignedIn);
+    if (isSignedIn) {
+      listDriveFiles();
+    }
+  };
+
+  const handleDriveSignIn = () => {
+    if (typeof window !== "undefined" && window.gapi) {
+      window.gapi.auth2.getAuthInstance().signIn();
+    }
+  };
+
+  const handleDriveSignOut = () => {
+    if (typeof window !== "undefined" && window.gapi) {
+      window.gapi.auth2.getAuthInstance().signOut();
+      setEntries([]);
+    }
+  };
+
+  const listDriveFiles = async () => {
+    if (!window.gapi?.client?.drive) return;
+
+    try {
+      setIsLoading(true);
+      const response = await window.gapi.client.drive.files.list({
+        q: "mimeType='application/vnd.google-apps.folder' or name contains '.c'",
+        fields: "files(id, name, mimeType, parents, modifiedTime)",
+        orderBy: "modifiedTime desc",
+      });
+
+      const allFiles = response.result.files;
+      const cFiles = allFiles.filter((file) => file.name.endsWith(".c"));
+      const cFileFolderIds = new Set(
+        cFiles.map((file) => file.parents?.[0]).filter(Boolean)
+      );
+      
+      const filteredFolders = allFiles.filter(
+        (file) =>
+          file.mimeType === "application/vnd.google-apps.folder" &&
+          cFileFolderIds.has(file.id)
+      );
+
+      setEntries([...filteredFolders, ...cFiles]);
+    } catch (err) {
+      console.error("Error listing files:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  async function handleDriveFileClick(file) {
+    if (file.mimeType === "application/vnd.google-apps.folder") {
+      const response = await window.gapi.client.drive.files.list({
+        q: `'${file.id}' in parents`,
+        fields: "files(id, name, mimeType, modifiedTime)",
+      });
+      setEntries(response.result.files);
+      setHandleStack([...handleStack, file]);
+      setCurrentHandle(file);
+    } else {
+      try {
+        setIsLoading(true);
+        const response = await window.gapi.client.drive.files.get({
+          fileId: file.id,
+          alt: "media",
+        });
+        openTab({ 
+          name: file.name, 
+          content: response.body,
+          driveFileId: file.id 
+        });
+      } catch (err) {
+        console.error("Error opening file:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }
 
   async function handleFolderSelect() {
     try {
@@ -51,12 +162,31 @@ export default function FileExplorer({ openTab }) {
   }
 
   async function goBack() {
-    if (handleStack.length > 1) {
-      handleStack.pop();
-      const parentHandle = handleStack[handleStack.length - 1];
-      setCurrentHandle(parentHandle);
-      await readDirectory(parentHandle);
-      setHandleStack([...handleStack]);
+    if (source === 'local') {
+      if (handleStack.length > 1) {
+        handleStack.pop();
+        const parentHandle = handleStack[handleStack.length - 1];
+        setCurrentHandle(parentHandle);
+        await readDirectory(parentHandle);
+        setHandleStack([...handleStack]);
+      }
+    } else {
+      if (handleStack.length > 1) {
+        handleStack.pop();
+        const parentHandle = handleStack[handleStack.length - 1];
+        setCurrentHandle(parentHandle);
+        const response = await window.gapi.client.drive.files.list({
+          q: `'${parentHandle.id}' in parents`,
+          fields: "files(id, name, mimeType, modifiedTime)",
+        });
+        setEntries(response.result.files);
+        setHandleStack([...handleStack]);
+      } else {
+        // Go back to root
+        await listDriveFiles();
+        setHandleStack([]);
+        setCurrentHandle(null);
+      }
     }
   }
 
@@ -73,6 +203,24 @@ export default function FileExplorer({ openTab }) {
         <SearchBox />
       </div>
       <hr className="my-1 text-gray-600" />
+      
+      <div className="mb-2">
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setSource("local")}
+            className={`px-2 py-1 rounded ${source === "local" ? "bg-[#3E3E42]" : "bg-[#2D2D2D]"}`}
+          >
+            Local Files
+          </button>
+          <button
+            onClick={() => setSource("drive")}
+            className={`px-2 py-1 rounded ${source === "drive" ? "bg-[#3E3E42]" : "bg-[#2D2D2D]"}`}
+          >
+            Google Drive
+          </button>
+        </div>
+      </div>
+
       <div className="">
         <div
           className="flex items-center justify-between cursor-pointer"
@@ -86,16 +234,46 @@ export default function FileExplorer({ openTab }) {
             />
             <span>Files</span>
           </div>
-          <button
-            onClick={handleFolderSelect}
-            className="p-1 hover:bg-[#3E3E42] rounded"
-          >
-            Open Folder
-          </button>
+          {source === "local" ? (
+            <button
+              onClick={handleFolderSelect}
+              className="p-1 hover:bg-[#3E3E42] rounded"
+            >
+              Open Folder
+            </button>
+          ) : (
+            <div className="flex space-x-1">
+              {isSignedIn ? (
+                <>
+                  <button
+                    onClick={listDriveFiles}
+                    className="p-1 hover:bg-[#3E3E42] rounded"
+                    title="Refresh"
+                  >
+                    <FiRefreshCw size={16} />
+                  </button>
+                  <button
+                    onClick={handleDriveSignOut}
+                    className="p-1 hover:bg-[#3E3E42] rounded"
+                  >
+                    <FiLogOut size={16} />
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={handleDriveSignIn}
+                  className="p-1 hover:bg-[#3E3E42] rounded flex items-center"
+                >
+                  <FiLogIn size={16} className="mr-1" />
+                  Sign In
+                </button>
+              )}
+            </div>
+          )}
         </div>
         {expandedSections.explorer && (
           <div className="mt-2">
-            {handleStack.length > 1 && (
+            {(handleStack.length > 0 || (source === 'drive' && isSignedIn)) && (
               <button
                 onClick={goBack}
                 className="flex items-center space-x-2 p-1 hover:bg-[#3E3E42] rounded w-full text-left"
@@ -104,22 +282,39 @@ export default function FileExplorer({ openTab }) {
                 <span>Back</span>
               </button>
             )}
-            <ul className="mt-2">
-              {entries.map((entry, index) => (
-                <li
-                  key={index}
-                  onClick={() => handleEntryClick(entry)}
-                  className="flex items-center space-x-2 p-1 hover:bg-[#3E3E42] rounded cursor-pointer"
-                >
-                  {entry.kind === "directory" ? (
-                    <MdFolder />
-                  ) : (
-                    <MdInsertDriveFile />
-                  )}
-                  <span>{entry.name}</span>
-                </li>
-              ))}
-            </ul>
+            
+            {isLoading ? (
+              <div className="p-2 text-center">Loading...</div>
+            ) : entries.length === 0 ? (
+              <div className="p-2 text-gray-400">
+                {source === 'local' ? 'No folder selected' : isSignedIn ? 'No files found' : 'Sign in to view files'}
+              </div>
+            ) : (
+              <ul className="mt-2">
+                {entries.map((entry, index) => (
+                  <li
+                    key={index}
+                    onClick={() => source === 'local' ? handleEntryClick(entry) : handleDriveFileClick(entry)}
+                    className="flex items-center space-x-2 p-1 hover:bg-[#3E3E42] rounded cursor-pointer"
+                  >
+                    {source === 'local' ? (
+                      entry.kind === "directory" ? (
+                        <MdFolder />
+                      ) : (
+                        <MdInsertDriveFile />
+                      )
+                    ) : (
+                      entry.mimeType === "application/vnd.google-apps.folder" ? (
+                        <MdFolder />
+                      ) : (
+                        <MdInsertDriveFile />
+                      )
+                    )}
+                    <span>{entry.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>

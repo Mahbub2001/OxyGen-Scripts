@@ -7,6 +7,7 @@ import Terminal from "@/components/Terminal/Terminal";
 import Tabs from "../Tabs/Tabs";
 import InputTaking from "../InputTaking/InputTaking";
 import axios from "axios";
+import { FiSave } from "react-icons/fi";
 
 function EditorPanel({
   tabs,
@@ -18,12 +19,16 @@ function EditorPanel({
 }) {
   const [currentInput, setCurrentInput] = useState("");
   const [currentOutput, setCurrentOutput] = useState("");
+  const [isDriveFile, setIsDriveFile] = useState(false);
+  const [currentDriveFileId, setCurrentDriveFileId] = useState(null);
 
   const closeTab = (tabName) => {
     setTabs((prevTabs) => prevTabs.filter((tab) => tab.name !== tabName));
     if (currentTab === tabName) {
       setCurrentTab(tabs.length > 1 ? tabs[0].name : null);
     }
+    setIsDriveFile(false);
+    setCurrentDriveFileId(null);
   };
 
   const encode = (str) => {
@@ -94,8 +99,6 @@ function EditorPanel({
       const stdin = encode(currentInput);
 
       const token = await postSubmission(language_id, source_code, stdin);
-      // console.log("Submission token:", token);
-
       const res = await getOutput(token);
 
       const status_name = res.status.description;
@@ -122,6 +125,52 @@ function EditorPanel({
     }
   };
 
+  const saveToDrive = async () => {
+    if (!currentDriveFileId || !window.gapi?.auth) return;
+
+    try {
+      const blob = new Blob([getContent], { type: "text/plain" });
+      const metadata = {
+        name: currentTab,
+        mimeType: "text/plain",
+      };
+
+      const form = new FormData();
+      form.append(
+        "metadata",
+        new Blob([JSON.stringify(metadata)], { type: "application/json" })
+      );
+      form.append("file", blob);
+
+      await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${currentDriveFileId}?uploadType=multipart`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${window.gapi.auth.getToken().access_token}`,
+          },
+          body: form,
+        }
+      );
+
+      setCurrentOutput("File saved successfully to Google Drive");
+    } catch (error) {
+      console.error("Error saving file:", error);
+      setCurrentOutput("Error: Failed to save file to Google Drive");
+    }
+  };
+
+  React.useEffect(() => {
+    const currentTabData = tabs.find((tab) => tab.name === currentTab);
+    if (currentTabData) {
+      setIsDriveFile(!!currentTabData.driveFileId);
+      setCurrentDriveFileId(currentTabData.driveFileId || null);
+    } else {
+      setIsDriveFile(false);
+      setCurrentDriveFileId(null);
+    }
+  }, [currentTab, tabs]);
+
   return (
     <div className="h-full rounded-md">
       <PanelGroup direction="vertical">
@@ -134,13 +183,24 @@ function EditorPanel({
                 setCurrentTab={setCurrentTab}
                 closeTab={closeTab}
               />
-              <button
-                type="button"
-                onClick={runCode}
-                className="focus:outline-none cursor-pointer text-white bg-purple-900 hover:bg-purple-900 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-1.5 mb-2 dark:bg-purple-900 dark:hover:bg-purple-900 dark:focus:ring-purple-900"
-              >
-                Run
-              </button>
+              <div className="flex space-x-2">
+                {isDriveFile && (
+                  <button
+                    type="button"
+                    onClick={saveToDrive}
+                    className="focus:outline-none cursor-pointer text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-1.5 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 flex items-center"
+                  >
+                    <FiSave className="mr-1" /> Save
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={runCode}
+                  className="focus:outline-none cursor-pointer text-white bg-purple-900 hover:bg-purple-900 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-1.5 mb-2 dark:bg-purple-900 dark:hover:bg-purple-900 dark:focus:ring-purple-900"
+                >
+                  Run
+                </button>
+              </div>
             </div>
             <Editor
               fileContent={
