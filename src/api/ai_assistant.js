@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const processQuery = async (query, code, scenario, sessionId, images = []) => {
-    console.log(images);    
+    // console.log(images);    
     try {
         const payload = {
             query: query,

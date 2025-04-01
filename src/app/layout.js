@@ -2,7 +2,8 @@ import { Quicksand } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar/Navbar";
 import { ToastContainer } from "react-toastify";
-
+// import { GoogleOAuthProvider } from "@react-oauth/google";
+import Providers from "./providers";
 const quicksand = Quicksand({
   variable: "--font-quicksand",
   subsets: ["latin"],
@@ -16,11 +17,15 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      {/* <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}> */}
       <body className={`${quicksand.variable} antialiased`}>
-        <Navbar />
-        {children}
-        <ToastContainer />
+        <Providers>
+          <Navbar />
+          {children}
+          <ToastContainer />
+        </Providers>
       </body>
+      {/* </GoogleOAuthProvider> */}
     </html>
   );
 }
