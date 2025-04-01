@@ -44,19 +44,15 @@ The software leverages **RapidAPI** for code submission.
 ## Installation
 1. Clone the repository:
    ```sh
-   git clone https://github.com/your-repo/advanced-c-code-editor.git
+   git clone https://github.com/Mahbub2001/OxyGen-Scripts.git
    ```
-2. Navigate to the project directory:
-   ```sh
-   cd advanced-c-code-editor
-   ```
-3. Install dependencies:
+2. Install dependencies:
    ```sh
    npm install
    ```
-4. Run the application:
+3. Run the application:
    ```sh
-   npm start
+   npm run dev
    ```
 
 ## Frontend Link:
