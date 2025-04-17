@@ -44,7 +44,7 @@ The software leverages **RapidAPI** for code submission.
 
 ## Pre-Installation Requirements
 
-create a new file called `.env` and add the following lines:
+create a new file called `.env.local` and add the following lines:
 NEXT_PUBLIC_JUDGE_API=your_rapid_api_key_here
 NEXT_PUBLIC_BACKEND_URL=https://your-backend-url.com
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id_here
