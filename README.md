@@ -40,11 +40,21 @@ The AI assistant provides the following features:
 ## API Integration
 The software leverages **RapidAPI** for code submission.
 - RapidAPI Hub: [Visit Here](https://rapidapi.com/hub)
+- Google Cloud: [Visit Here](https://cloud.google.com/)
+
+## Pre-Installation Requirements
+
+create a new file called `.env` and add the following lines:
+NEXT_PUBLIC_JUDGE_API=your_rapid_api_key_here
+NEXT_PUBLIC_BACKEND_URL=https://your-backend-url.com
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id_here
+NEXT_PUBLIC_GOOGLE_API_KEY=your_google_api_key_here
+
 
 ## Installation
 1. Clone the repository:
    ```sh
-   git clone https://github.com/Mahbub2001/OxyGen-Scripts.git
+   git clone git clone https://github.com/Mahbub2001/OxyGen-Scripts.git
    ```
 2. Install dependencies:
    ```sh
